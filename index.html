@@ -101,6 +101,39 @@ rpl::Apply(
     std::same_as<const std::unique_ptr<int>&> auto&& first,
     std::same_as<std::unique_ptr<int>> auto&& second) {}));
 ```
+---
+Error Handling
+---
+Short-circuit on error and wrap results
+```c++ [6|7|8|9|4-9]
+std::optional<int> ParseInt(std::string_view);
+
+std::vector<std::optional<std::string>> values = {...};
+std::optional<int> sum = rpl::Apply(
+  values,                     // optional<string>
+  rpl::UnwrapOptional(),      // string
+  rpl::Transform(&ParseInt),  // optional<int>
+  rpl::UnwrapOptional(),      // int
+  rpl::Accumulate());         // int
+```
+---
+Monadic style
+```c++ [6-8|10-14]
+std::optional<int> ParseInt(std::string_view);
+int Squared(int i);
+
+std::optional<std::string> value = ...;
+
+std::optional<int> cpp23 = value
+  .and_then(&ParseInt)
+  .transform(&Squared);
+
+std::optional<int> rappel = rpl::Apply(
+  value,
+  rpl::UnwrapOptionalComplete(),
+  rpl::TransformComplete(&ParseInt),
+  rpl::TransformComplete(&Squared));
+```
           </textarea>
         </section>
       </div>
