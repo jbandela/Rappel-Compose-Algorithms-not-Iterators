@@ -68,6 +68,39 @@ struct Transactions {
   }
 };
 ```
+---
+### Multi-Value Streams
+---
+Multi-value streams are passed as seperate arguments
+```c++ [2|3|4|5]
+std::map<int, std::vector<int>> values = {...};
+rpl::Apply(values,              // pair<int, vector>
+           rpl::ExpandTuple(),  // int, vector
+           rpl::Flatten(),      // int, int
+           rpl::ForEach([](int k, int v) { ... }));
+```
+---
+First class support
+```c++ [5-6]
+std::map<std::string, int> name2age = {...};
+auto age2name = rpl::Apply(
+  std::move(name2age),
+  rpl::ExpandTuple(),
+  rpl::Swizzle<1, 0>(),
+  rpl:ToMap<std::map>());
+```
+---
+"Correct" Reference Semantics
+```c++ [4-5|6-8]
+std::vector<std::unique_ptr<int>> values = {...};
+rpl::Apply(
+  values,
+  rpl::ZipResult([](const auto& ptr) {
+    return std::make_unique<int>(*ptr); }),
+  rpl::ForEach([](
+    std::same_as<const std::unique_ptr<int>&> auto&& first,
+    std::same_as<std::unique_ptr<int>> auto&& second) {}));
+```
           </textarea>
         </section>
       </div>
