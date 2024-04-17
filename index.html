@@ -24,9 +24,52 @@
 
 Authors: Chris Philip and John Bandela  
 Presented by: John Bandela at CppNow 2024
+---
+## Why Rappel?
+---
+### Composition
+---
+`Compose` is just a regular stage
+```c++ [2|7]
+auto FlattenOptional() {
+  return rpl::Compose(rpl::Filter(), rpl::Deref());
+}
+
+rpl::Apply(
+  std::vector<std::optional<int>>{1, std::nullopt, 3},
+  FlattenOptional(),
+  rpl::To<std::vector>());
+```
+---
+`Compose` generators
+```c++ [2-4|8]
+auto PerfectSquares() {
+  return rpl::Compose(
+    rpl::Iota(1),
+    rpl::Transform([](int i) { return i*i; }));
+}
+
+rpl::Apply(
+  PerfectSquares(),
+  rpl::Filter([](int i) { return i >= 100; }),
+  rpl::Take(5),
+  rpl::To<std::vector>());
+```
+---
+`Compose` ranges
+```c++ [5-7]
+struct Transactions {
+  std::vector<double> amounts;
+
+  auto Credits() {
+    return rpl::Compose(
+      std::cref(amounts),
+      rpl::Filter([](double d) { return d > 0; }));
+  }
+};
+```
           </textarea>
         </section>
-        <section>Slide 2</section>
       </div>
     </div>
 
