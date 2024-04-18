@@ -102,7 +102,7 @@ rpl::Apply(
     std::same_as<std::unique_ptr<int>> auto&& second) {}));
 ```
 ---
-Error Handling
+### Error Handling
 ---
 Short-circuit on error and wrap results
 ```c++ [6|7|8|9|4-9]
@@ -133,6 +133,92 @@ std::optional<int> rappel = rpl::Apply(
   rpl::UnwrapOptionalComplete(),
   rpl::TransformComplete(&ParseInt),
   rpl::TransformComplete(&Squared));
+```
+---
+### Higher-Order Stages
+---
+`Tee` splits outputs to multiple stages
+```c++ [8|9-12]
+auto compute_avg = [](int sum, int count) {
+  return sum / count;
+};
+std::vector<int> values = {...};
+auto [min, max, count, avg] = rpl::Apply(
+  values,
+  rpl::Tee(
+    rpl::Min(), rpl::Max(), rpl::Count(),
+    rpl::Compose(
+      rpl::Tee(rpl::Accumulate(), rpl::Count()),
+      rpl::TransformComplete(rpl::ExpandTuple()),
+      rpl::TransformComplete(compute_avg))));
+```
+---
+Group elements
+```c++ [4-6]
+std::vector<int> values = {1, 2, 11, 12, 21, 22};
+auto groups = rpl::Apply(
+  values,
+  rpl::MapGroupBy<std::map>(
+    [](int i) { return i / 10; },
+    rpl::To<std::vector>()),
+  rpl::ToMap<std::map>());
+// groups = {0: {1, 2},
+//           1: {11, 12},
+//           2: {21, 22}};
+```
+---
+Reuse Transforms
+```c++ [3]
+int i = rpl::Apply(
+  std::make_unique<int>(1),
+  rpl::TransformComplete(rpl::Deref()));
+```
+---
+### Reference Inputs
+---
+Const reference iteration by default
+```c++
+std::vector<std::unique_ptr<int>> values = {...};
+rpl::Apply(
+  values,  // values not copied!
+  rpl::ForEach(
+    [](std::same_as<const std::unique_ptr<int>&> auto&&) {
+  }));
+```
+---
+Mutable references with `std::ref`
+```c++
+rpl::Apply(
+  std::ref(values),
+  rpl::ForEach(
+    [](std::same_as<std::unique_ptr<int>&> auto&&) {
+  }));
+```
+---
+R-Values when moved
+```c++
+rpl::Apply(
+  std::move(values),
+  rpl::ForEach(
+    [](std::same_as<std::unique_ptr<int>> auto&&) {
+  }));
+```
+---
+Lazily moved
+```c++ [8-13]
+auto values = rpl::Apply(
+  {1,2,3,4},
+  rpl::Transform([](int i) {
+    return std::make_unique<int>(i); }),
+  rpl::To<std::vector>());
+
+auto evens = rpl::Apply(
+  std::move(values),
+  rpl::Filter([](const auto& ptr) {
+    return *ptr % 2 == 0; }),
+  rpl::To<std::vector>());
+// values = {*1, nullptr, *3, nullptr}
+// evens = {*2, *4}
 ```
           </textarea>
         </section>
