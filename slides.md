@@ -99,6 +99,19 @@ void OutputPythagoreanTriples() {
 }
 
 ```
+Note:
+* Apply 
+  * Input
+  * One or more *stage*
+  * Input + Stages = Pipeline
+  * Eager execution
+* Iota - Generator
+* ZipResult - Calls a function object with the stream values, and zips it
+* Flatten - Flattens the last stream argument - outputting the previous args and every sub-element of the last arg
+* Swizzle - Rearranges the stream arguments
+* Filter - Only passes to next stage iff predicate is true
+* Take
+* ForEach - Notice now we get multiple arguments
 --
 # Repetition 
 ```c++ [|4-5|6-7]
@@ -162,7 +175,7 @@ void OutputPythagoreanTriples() {
 --
 
 # Pythagorean Triples 
-```c++[1|4|]
+```c++[1|4||5|6|7|8|9-10]
 auto PythagoreanTriples() {
   auto zip_flat = [](auto f){
    return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
