@@ -13,7 +13,7 @@ Presented by: John Bandela at CppNow 2024
 * Pythagorean Triple: `a*a + b*b == c*c`
 
 --
-# Helper range
+### Helper range
 ```c++
 template<Semiregular T>
 struct maybe_view : view_interface<maybe_view<T>> {
@@ -31,7 +31,7 @@ private:
 };
 ```
 --
-# Helper lambdas
+### Helper lambdas
 ```c++
 inline constexpr auto for_each =
   []<Range R,
@@ -51,7 +51,7 @@ inline constexpr auto yield_if =
 ```
 --
 
-# Lazy Triples
+### Lazy Triples
 ```c++
 using view::iota;
 auto triples =
@@ -65,7 +65,7 @@ auto triples =
   });
 ```
 --
-# Output
+### Output
 ```c++
 for(auto triple : triples | view::take(10)) {
   cout << '('
@@ -75,12 +75,12 @@ for(auto triple : triples | view::take(10)) {
 }
 ```
 --
-# Rappel
+## Rappel
 * Google's alterative to std::ranges for algorithm composition
 * Makes a different set of tradeoffs than std::ranges
 * Look at Pythagorean Triples
 --
-# Pythagorean Triples 
+### Pythagorean Triples 
 ```c++[|2,14|3|4|5|6|7|8|9-10|11|12-13]
 void OutputPythagoreanTriples() {
   rpl::Apply(
@@ -113,7 +113,7 @@ Note:
 * Take
 * ForEach - Notice now we get multiple arguments
 --
-# Repetition 
+### Repetition 
 ```c++ [|4-5|6-7]
 void OutputPythagoreanTriples() {
   rpl::Apply(
@@ -133,7 +133,7 @@ void OutputPythagoreanTriples() {
 
 ```
 --
-# Compose 
+### Compose 
 ```c++[2-3|6-7|]
 void OutputPythagoreanTriples() {
   auto zip_flat = [](auto f){
@@ -153,7 +153,7 @@ void OutputPythagoreanTriples() {
 
 ```
 --
-# Flexibility 
+### Flexibility 
 ```c++[|11-13]
 void OutputPythagoreanTriples() {
   auto zip_flat = [](auto f){
@@ -174,7 +174,7 @@ void OutputPythagoreanTriples() {
 ```
 --
 
-# Pythagorean Triples 
+### Pythagorean Triples 
 ```c++[1|4||5|6|7|8|9-10]
 auto PythagoreanTriples() {
   auto zip_flat = [](auto f){
@@ -192,7 +192,7 @@ auto PythagoreanTriples() {
 
 --
 
-# Pythagorean Triples 
+### Pythagorean Triples 
 ```c++[|2,7|3|4|5|6]
 vector<tuple<int,int,int>> triples = 
   rpl::Apply(
@@ -206,7 +206,7 @@ vector<tuple<int,int,int>> triples =
 
 --
 
-# Compose
+### Compose
 
 ```c++
 auto PythagoreanTriples() {
@@ -233,7 +233,7 @@ auto PythagoreanTriples() {
 
 ---
 
-# Next Slide
+### Next Slide
 
 
  
