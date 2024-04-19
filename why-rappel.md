@@ -1,10 +1,12 @@
 ## Why Rappel?
 
 
+
 ### Composition
 
 
-`Compose` is just a regular stage
+
+`Compose` is a first-class stage
 ```c++ [2|7]
 auto FlattenOptional() {
   return rpl::Compose(rpl::Filter(), rpl::Deref());
@@ -15,6 +17,7 @@ rpl::Apply(
   FlattenOptional(),
   rpl::To<std::vector>());
 ```
+
 
 
 `Compose` generators
@@ -33,12 +36,13 @@ rpl::Apply(
 ```
 
 
+
 `Compose` ranges
 ```c++ [5-7]
 struct Transactions {
   std::vector<double> amounts;
 
-  auto Credits() {
+  auto Credits() const {
     return rpl::Compose(
       std::cref(amounts),
       rpl::Filter([](double d) { return d > 0; }));
@@ -47,7 +51,9 @@ struct Transactions {
 ```
 
 
+
 ### Multi-Value Streams
+
 
 
 Multi-value streams are passed as seperate arguments
@@ -60,15 +66,30 @@ rpl::Apply(values,              // pair<int, vector>
 ```
 
 
+
 First class support
 ```c++ [5-6]
-std::map<std::string, int> name2age = {...};
-auto age2name = rpl::Apply(
-  std::move(name2age),
+std::map<std::string, int> name2id = {...};
+auto id2name = rpl::Apply(
+  std::move(name2id),
   rpl::ExpandTuple(),
   rpl::Swizzle<1, 0>(),
   rpl:ToMap<std::map>());
 ```
+
+
+
+TransformArg
+```c++ [5-6]
+std::map<std::string, Person> name2person = {...};
+auto id2name = rpl::Apply(
+  std::move(name2id),
+  rpl::ExpandTuple(),
+  rpl::TransformArg<1>(&Person::id),
+  rpl::Swizzle<1, 0>(),
+  rpl:ToMap<std::map>());
+```
+
 
 
 "Correct" Reference Semantics
@@ -78,13 +99,22 @@ rpl::Apply(
   values,
   rpl::ZipResult([](const auto& ptr) {
     return std::make_unique<int>(*ptr); }),
-  rpl::ForEach([](
-    std::same_as<const std::unique_ptr<int>&> auto&& first,
-    std::same_as<std::unique_ptr<int>> auto&& second) {}));
+  rpl::ForEach([](auto&& first, auto&& second) {
+      static_assert(std::is_same_v<
+        decltype(first),
+        const std::unique_ptr<int>&
+      >);
+      static_assert(std::is_same_v<
+        decltype(second),
+        std::unique_ptr<int>&&
+      >);
+    }));
 ```
 
 
+
 ### Error Handling
+
 
 
 Short-circuit on error and wrap results
@@ -99,6 +129,7 @@ std::optional<int> sum = rpl::Apply(
   rpl::UnwrapOptional(),      // int
   rpl::Accumulate());         // int
 ```
+
 
 
 Monadic style
@@ -120,13 +151,33 @@ std::optional<int> rappel = rpl::Apply(
 ```
 
 
+
+Monadic StatusOr
+```c++ [6-8|10-14]
+absl::StatusOr<int> ParseInt(std::string_view);
+int Squared(int i);
+
+absl::StatusOr<std::string> value = ...;
+
+absl::StatusOr<int> rappel = rpl::Apply(
+  value,
+  rpl::UnwrapStatusOrComplete(),
+  rpl::TransformComplete(&ParseInt),
+  rpl::TransformComplete(&Squared));
+```
+
+
+
 ### Higher-Order Stages
 
 
+
 `Tee` splits outputs to multiple stages
-```c++ [8|9-12]
+```c++ [10|11-14]
 auto compute_avg = [](int sum, int count) {
-  return sum / count;
+  return count > 0
+    ? std::make_optional(sum / count)
+    : std::nullopt;
 };
 std::vector<int> values = {...};
 auto [min, max, count, avg] = rpl::Apply(
@@ -140,30 +191,29 @@ auto [min, max, count, avg] = rpl::Apply(
 ```
 
 
+
 Group elements
-```c++ [4-6]
-std::vector<int> values = {1, 2, 11, 12, 21, 22};
-auto groups = rpl::Apply(
-  values,
-  rpl::MapGroupBy<std::map>(
-    [](int i) { return i / 10; },
-    rpl::To<std::vector>()),
-  rpl::ToMap<std::map>());
-// groups = {0: {1, 2},
-//           1: {11, 12},
-//           2: {21, 22}};
+```c++ [9-12]
+struct Employee {
+  int id;
+  bool is_fulltime;
+  std::string org;
+};
+std::vector<Employee> employees = {...};
+auto counts = rpl::Apply(
+  employees,
+  rpl::MapGroupBy<std::unordered_map>(
+    &Employee::org
+    rpl::Filter(&Employee::is_fulltime),
+    rpl::Count()),
+  rpl::MakePair(),
+  rpl::To<std::vector>());
 ```
 
-
-Reuse Transforms
-```c++ [3]
-int i = rpl::Apply(
-  std::make_unique<int>(1),
-  rpl::TransformComplete(rpl::Deref()));
-```
 
 
 ### Reference Inputs
+
 
 
 Const reference iteration by default
@@ -172,9 +222,14 @@ std::vector<std::unique_ptr<int>> values = {...};
 rpl::Apply(
   values,  // values not copied!
   rpl::ForEach(
-    [](std::same_as<const std::unique_ptr<int>&> auto&&) {
+    [](auto&& ptr) {
+    static_assert(std::is_same_v<
+      decltype(ptr),
+      const std::unique_ptr<int>&
+    >);
   }));
 ```
+
 
 
 Mutable references with `std::ref`
@@ -182,9 +237,14 @@ Mutable references with `std::ref`
 rpl::Apply(
   std::ref(values),
   rpl::ForEach(
-    [](std::same_as<std::unique_ptr<int>&> auto&&) {
+    [](auto&& ptr) {
+      static_assert(std::is_same_v<
+        decltype(ptr),
+        std::unique_ptr<int>&
+      >);
   }));
 ```
+
 
 
 R-Values when moved
@@ -192,17 +252,21 @@ R-Values when moved
 rpl::Apply(
   std::move(values),
   rpl::ForEach(
-    [](std::same_as<std::unique_ptr<int>> auto&&) {
+    [](auto&& ptr) {
+      static_assert(std::is_same_v<
+        decltype(first),
+        std::unique_ptr<int>&&
+      >);
   }));
 ```
+
 
 
 Lazily moved
 ```c++ [8-13]
 auto values = rpl::Apply(
-  {1,2,3,4},
-  rpl::Transform([](int i) {
-    return std::make_unique<int>(i); }),
+  {std::make_unique<int>(1), std::make_unique<int>(2),
+   std::make_unique<int>(3), std::make_unique<int>(4)},
   rpl::To<std::vector>());
 
 auto evens = rpl::Apply(
