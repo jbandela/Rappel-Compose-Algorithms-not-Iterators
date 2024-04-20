@@ -87,7 +87,7 @@ void OutputPythagoreanTriples() {
    rpl::Iota(1),
    rpl::ZipResult([](int c) {return rpl::Iota(1, c+1);}),
    rpl::Flatten(),
-   rpl::ZipResult([](int c, int a) {return rpl::Iota(a, c+1);}),
+   rpl::ZipResult([](int c, int a){return rpl::Iota(a, c+1);}),
    rpl::Flatten(),
    rpl::Swizzle<1, 2, 0>(),
    rpl::Filter(
@@ -97,7 +97,6 @@ void OutputPythagoreanTriples() {
        std::cout << a << " " << b << " " << c << "\n";
    }));
 }
-
 ```
 Note:
 * Apply 
