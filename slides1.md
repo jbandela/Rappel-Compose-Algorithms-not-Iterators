@@ -6,7 +6,7 @@ Authors: Chris Philip and John Bandela
 Presented by: John Bandela at CppNow 2024
 
 ---
-# A C++ Tradition
+## A C++ Tradition  
 * In December 2018 after ranges were merged into C++20 Eric Niebler wrote a blog post showing how ranges can implement Pythagorean triples
   * https://ericniebler.com/2018/12/05/standard-ranges/
 * We will honor that tradition today
@@ -78,7 +78,7 @@ for(auto triple : triples | view::take(10)) {
 ## Rappel
 * Google's alterative to std::ranges for algorithm composition
 * Makes a different set of tradeoffs than std::ranges
-* Look at Pythagorean Triples
+* Let's continue the tradition
 --
 ### Pythagorean Triples 
 ```c++[|2,14|3|4|5|6|7|8|9-10|11|12-13]
