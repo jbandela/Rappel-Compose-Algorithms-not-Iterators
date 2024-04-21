@@ -20,9 +20,9 @@ their occurrences) in decreasing frequency.
 ### Don Knuth
 
 Produces an absolute virtuoso work of art using literate programming and WEB.
-* Beautiful Pascal code
+* Elegant Pascal code
 * Tries
-* Cross-references
+* Beautifully typeset with cross-references
 
 --
 
