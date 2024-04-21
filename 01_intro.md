@@ -83,19 +83,18 @@ for(auto triple : triples | view::take(10)) {
 ### Pythagorean Triples 
 ```c++[|2,14|3|4|5|6|7|8|9-10|11|12-13]
 void OutputPythagoreanTriples() {
-  rpl::Apply(
-   rpl::Iota(1),
-   rpl::ZipResult([](int c) {return rpl::Iota(1, c+1);}),
-   rpl::Flatten(),
-   rpl::ZipResult([](int c, int a){return rpl::Iota(a, c+1);}),
-   rpl::Flatten(),
-   rpl::Swizzle<1, 2, 0>(),
-   rpl::Filter(
-       [](int a, int b, int c) {return a*a + b*b == c*c;}),
-   rpl::Take(10),
-   rpl::ForEach([](int a, int b, int c){
-       std::cout << a << " " << b << " " << c << "\n";
-   }));
+ rpl::Apply(
+  rpl::Iota(1),
+  rpl::ZipResult([](int c) {return rpl::Iota(1, c+1);}),
+  rpl::Flatten(),
+  rpl::ZipResult([](int c, int a){return rpl::Iota(a, c+1);}),
+  rpl::Flatten(),
+  rpl::Filter([](int c, int a, int b){return a*a + b*b == c*c;}),
+  rpl::Swizzle<1, 2, 0>(),
+  rpl::Take(10),
+  rpl::ForEach([](int a, int b, int c){
+   std::cout << a << " " << b << " " << c << "\n";
+  }));
 }
 ```
 Note:
@@ -107,8 +106,8 @@ Note:
 * Iota - Generator
 * ZipResult - Calls a function object with the stream values, and zips it
 * Flatten - Flattens the last stream argument - outputting the previous args and every sub-element of the last arg
-* Swizzle - Rearranges the stream arguments
 * Filter - Only passes to next stage iff predicate is true
+* Swizzle - Rearranges the stream arguments
 * Take
 * ForEach - Notice now we get multiple arguments
 --
@@ -121,9 +120,9 @@ void OutputPythagoreanTriples() {
    rpl::Flatten(),
    rpl::ZipResult([](int c, int a) {return rpl::Iota(a, c+1);}),
    rpl::Flatten(),
-   rpl::Swizzle<1, 2, 0>(),
    rpl::Filter(
-       [](int a, int b, int c) {return a*a + b*b == c*c;}),
+       [](int c, int a, int b) {return a*a + b*b == c*c;}),
+   rpl::Swizzle<1, 2, 0>(),
    rpl::Take(10),
    rpl::ForEach([](int a, int b, int c){
        std::cout << a << " " << b << " " << c << "\n";
@@ -141,9 +140,9 @@ void OutputPythagoreanTriples() {
    rpl::Iota(1),
    zip_flat([](int c) {return rpl::Iota(1, c+1);}),
    zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
-   rpl::Swizzle<1, 2, 0>(),
    rpl::Filter(
-       [](int a, int b, int c) {return a*a + b*b == c*c;}),
+       [](int c, int a, int b) {return a*a + b*b == c*c;}),
+   rpl::Swizzle<1, 2, 0>(),
    rpl::Take(10),
    rpl::ForEach([](int a, int b, int c){
        std::cout << a << " " << b << " " << c << "\n";
@@ -152,8 +151,9 @@ void OutputPythagoreanTriples() {
 
 ```
 --
+<!-- .slide: data-transition="slide-in none-out" -->
 ### Flexibility 
-```c++[|11-13]
+```c++[|11-13||1]
 void OutputPythagoreanTriples() {
   auto zip_flat = [](auto f){
    return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
@@ -161,9 +161,9 @@ void OutputPythagoreanTriples() {
    rpl::Iota(1),
    zip_flat([](int c) {return rpl::Iota(1, c+1);}),
    zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
-   rpl::Swizzle<1, 2, 0>(),
    rpl::Filter(
-       [](int a, int b, int c) {return a*a + b*b == c*c;}),
+       [](int c, int a, int b) {return a*a + b*b == c*c;}),
+   rpl::Swizzle<1, 2, 0>(),
    rpl::Take(10),
    rpl::ForEach([](int a, int b, int c){
        std::cout << a << " " << b << " " << c << "\n";
@@ -172,25 +172,90 @@ void OutputPythagoreanTriples() {
 
 ```
 --
+<!-- .slide: data-transition="none-out none-in" -->
+### Flexibility 
+```c++[1||4]
+auto OutputPythagoreanTriples() {
+  auto zip_flat = [](auto f){
+   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
+  rpl::Apply(
+   rpl::Iota(1),
+   zip_flat([](int c) {return rpl::Iota(1, c+1);}),
+   zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
+   rpl::Filter(
+       [](int c, int a, int b) {return a*a + b*b == c*c;}),
+   rpl::Swizzle<1, 2, 0>(),
+   rpl::Take(10),
+   rpl::ForEach([](int a, int b, int c){
+       std::cout << a << " " << b << " " << c << "\n";
+   }));
+}
 
-### Pythagorean Triples 
-```c++[1|4||5|6|7|8|9-10]
-auto PythagoreanTriples() {
+```
+--
+<!-- .slide: data-transition="none-out none-in" -->
+### Flexibility 
+```c++[4||11-14]
+auto OutputPythagoreanTriples() {
   auto zip_flat = [](auto f){
    return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
   return rpl::Compose(
    rpl::Iota(1),
    zip_flat([](int c) {return rpl::Iota(1, c+1);}),
    zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
-   rpl::Swizzle<1, 2, 0>(),
    rpl::Filter(
-       [](int a, int b, int c) {return a*a + b*b == c*c;}));
+       [](int c, int a, int b) {return a*a + b*b == c*c;}),
+   rpl::Swizzle<1, 2, 0>(),
+   rpl::Take(10),
+   rpl::ForEach([](int a, int b, int c){
+       std::cout << a << " " << b << " " << c << "\n";
+   }));
 }
 
 ```
-
 --
+<!-- .slide: data-transition=" none-in" -->
+### Flexibility 
+```c++[]
+auto OutputPythagoreanTriples() {
+  auto zip_flat = [](auto f){
+   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
+  return rpl::Compose(
+   rpl::Iota(1),
+   zip_flat([](int c) {return rpl::Iota(1, c+1);}),
+   zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
+   rpl::Filter(
+       [](int c, int a, int b) {return a*a + b*b == c*c;})
+   rpl::Swizzle<1, 2, 0>(),
 
+
+   );
+}
+
+```
+--
+### Pythagorean Triples 
+```c++[|6|7|8|9|10-11]
+auto OutputPythagoreanTriples() {
+  auto zip_flat = [](auto f){
+   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
+
+  return rpl::Compose(
+   rpl::Iota(1),
+   zip_flat([](int c) {return rpl::Iota(1, c+1);}),
+   zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
+   rpl::Swizzle<1, 2, 0>(),
+   rpl::Filter(
+       [](int c, int a, int b) {return a*a + b*b == c*c;})
+   );
+}
+
+```
+Note:
+* Hypotenuse length
+* Long leg length
+* Short leg length
+--
 ### Pythagorean Triples 
 ```c++[|2,7|3|4|5|6]
 vector<tuple<int,int,int>> triples = 
