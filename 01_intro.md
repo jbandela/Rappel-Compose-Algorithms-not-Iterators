@@ -6,6 +6,42 @@ Authors: Chris Philip and John Bandela
 Presented by: John Bandela at CppNow 2024
 
 ---
+## History
+![Programming Pearls](knuth_mcilroy.png)
+
+1986
+---
+### Challenge
+> Given a text file and an integer k, print the k most
+common words in the file (and the number of
+their occurrences) in decreasing frequency.
+--
+
+### Don Knuth
+
+Produces an absolute virtuoso work of art using literate programming and WEB.
+* Beautiful Pascal code
+* Tries
+* Cross-references
+
+--
+
+### Doug McIlroy 
+
+```
+tr -cs A-Za-z`
+` |
+tr A-Z a-z |
+sort |
+uniq -c |
+sort -rn |
+sed ${1} q 
+
+```
+--
+
+
+
 ## A C++ Tradition  
 * In December 2018 after ranges were merged into C++20 Eric Niebler wrote a blog post showing how ranges can implement Pythagorean triples
   * https://ericniebler.com/2018/12/05/standard-ranges/
