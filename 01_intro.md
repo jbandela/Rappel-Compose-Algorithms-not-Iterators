@@ -176,7 +176,7 @@ void OutputPythagoreanTriples() {
 <!-- .slide: data-transition="none-out none-in" -->
 ### Flexibility 
 ```c++[1||4]
-auto OutputPythagoreanTriples() {
+auto PythagoreanTriples() {
  auto zip_flat = [](auto f){
   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
  rpl::Apply(
@@ -197,7 +197,7 @@ auto OutputPythagoreanTriples() {
 <!-- .slide: data-transition="none-out none-in" -->
 ### Flexibility 
 ```c++[4||10-13]
-auto OutputPythagoreanTriples() {
+auto PythagoreanTriples() {
  auto zip_flat = [](auto f){
   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
  return rpl::Compose(
@@ -218,7 +218,7 @@ auto OutputPythagoreanTriples() {
 <!-- .slide: data-transition=" none-in" -->
 ### Flexibility 
 ```c++[]
-auto OutputPythagoreanTriples() {
+auto PythagoreanTriples() {
  auto zip_flat = [](auto f){
   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
  return rpl::Compose(
@@ -226,7 +226,7 @@ auto OutputPythagoreanTriples() {
   zip_flat([](int c) {return rpl::Iota(1, c+1);}),
   zip_flat([](int c, int a) {return rpl::Iota(a, c+1);}),
   rpl::Filter([](int c, int a, int b){return a*a + b*b == c*c;}),
-  rpl::Swizzle<1, 2, 0>(),
+  rpl::Swizzle<1, 2, 0>()
 
 
 
@@ -238,7 +238,7 @@ auto OutputPythagoreanTriples() {
 --
 ### Pythagorean Triples 
 ```c++[|6|7|8|9|10]
-auto OutputPythagoreanTriples() {
+auto PythagoreanTriples() {
  auto zip_flat = [](auto f){
   return rpl::Compose(rpl::ZipResult(f), rpl::Flatten());};
 
