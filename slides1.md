@@ -203,36 +203,6 @@ vector<tuple<int,int,int>> triples =
 
 ```
 
---
-
-### Compose
-
-```c++
-auto PythagoreanTriples() {
-  auto FlatZip = [](auto f){
-    return rpl::Compose(
-        rpl::ZipResult([f](auto... args){return f(args...);}),
-        rpl::Flatten()
-        );
-  };
-
-  return rpl::Compose(
-      rpl::Iota(1),                                                        
-      FlatZip(                                                      
-          [](auto z) { return rpl::Iota(1, z + 1); }                       
-          ),                                                               
-      FlatZip([](auto z, auto x) { return rpl::Iota(x, z + 1); }),  
-      rpl::Swizzle<1, 2, 0>(),                                             
-      rpl::Filter(                                                         
-        [](auto x, auto y, auto z) { return x * x + y * y == z * z; })  
-  );
-
-
-```
-
----
-
-### Next Slide
 
 
  
