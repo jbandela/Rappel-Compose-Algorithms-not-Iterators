@@ -86,7 +86,7 @@ auto LowerCaseString() {
 }
 ```
 --
-#### Unique Counts
+### Unique Counts
 ```c++
 auto UniqueCounts() {
  return rpl::Compose(
