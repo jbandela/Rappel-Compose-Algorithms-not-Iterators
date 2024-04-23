@@ -6,6 +6,10 @@ Authors: Chris Philip and John Bandela
 Presented by: John Bandela at CppNow 2024
 
 ---
+> __Iterators are the wrong abstraction for composing algorithms.__
+---
+
+---
 ## History
 ![Programming Pearls](knuth_mcilroy.png)
 
@@ -40,6 +44,49 @@ sed ${1} q
 ```
 --
 ## Pipeline Style
+* By pipeline style, we mean writing a series of transformations as a single expression without nested parentheses, rather than the more standard style of using separate invocations. 
+```c++
+// Standard C++, non-pipelined
+auto result1 = f1(input);
+auto result2 = f2(result1);
+auto result3 = f3(result2);
+
+// Pipeline style
+auto result = input | f1 | f2 | f3;
+
+```
+--
+### std::ranges
+```c++
+auto even = [](int i) { return 0 == i % 2; };
+auto square = [](int i) { return i * i; };
+auto filter_squared = std::view::iota(i) 
+  | std::views::filter(even) | std::views::transform(square);
+for (int i : filtered_squared)
+  std::cout << i << ' ';
+```
+* https://en.cppreference.com/w/cpp/ranges#Range_adaptors
+--
+
+### Find numbers whose square is greater than the hash of the string
+```c++
+ using IntAndString = std::pair<int, std::string>;
+ auto make_int_and_string = [](int i) -> IntAndString {
+     return {i*i, std::to_string(i)};
+ };
+ auto result = std::views::iota(1,1000001)                           //
+   | std::views::transform(make_int_and_string)  
+   | std::views::filter([](const auto& p) {
+        return p.first >= std::hash<std::string>()(p.second);
+    })
+   | std::views::transform(&IntAndString::second)  
+   | std::views::take(4);
+ for (auto s : result) 
+   std::cout << s << "\n";
+```
+
+
+
 --
 
 ## A C++ Tradition  
