@@ -287,13 +287,38 @@ We get one factor of N for:
 * Having each range cache its begin() so that has an amortized constant-time begin() as required by the view requirements 
 
 --
-### Rethinking
-* What if instead of a lazy pull model we did an eager push
-* `<iterator>` vs `<algorithm>`
-* Give up getting a single element at a time
-* Gain improved safety, simplicity
+## Rethinking
 --
-### Example
+### `<iterator>` vs `<algorithm>`
+ What if instead of a lazy pull model we did an eager push
+--
+#### `<iterator>`
+  * Lazy
+  * Values are pulled from the last iterator
+  * Potentially multiple loops (for example filter)
+  * Crossing a stage can result in destruction of temporaries (transform).
+  * `std::ranges::views` provide a way to compose iterators
+--
+#### `<algorithm>`
+  * Eager - Finishes by end of function call
+  * Top level loop that pushes values through
+  * A temporary can live through multiple stages
+  * We need a way to compose algorithms
+
+--
+## Rappel
+* Google's alterative to std::ranges for algorithm composition
+* Based on the eager push model of `<algorithm>`
+* Passes each value through the series of transformations in a single call stack.
+
+Note:
+Last is not always true as we will see with incremental and complete stages.
+--
+
+### Quick Examples
+We will have an example that we look at more in depth coming up. This is mainly just to get a feel of the shape.
+--
+#### Crash Example
 ```c++
  using IntAndString = std::pair<int, std::string>;
  auto make_int_and_string = [](int i) -> IntAndString {
@@ -313,9 +338,46 @@ We get one factor of N for:
  );
 
 ```
+--
+#### TPOIASI
+```c++
+int times2(int n){
+   std::cout << "transforming: " << n << "\n";
+   return n * 2;
+}
+bool isMultipleOf4(int n){return n % 4 == 0;}
+
+int main() {
+ std::vector<int> numbers = {1, 2, 3, 4, 5};
+ rpl::Apply(numbers 
+  rpl::Transform(times2),
+  rpl::Filter(isMultipleOf4),
+  rpl::ForEach([](auto result){
+     std::cout << result << '\n';
+  }));
+}
+
+```
+--
+#### Output
+```
+transforming: 1
+transforming: 2
+4
+transforming: 3
+transforming: 4
+8
+transforming: 5
+```
+--
+#### Simpler evaluation model
+* Transforms and Filters are not repeatedly evaluated
+* Stateful function objects for Transform
+* Stateful predicates for Filter
 ---
 
-## Introducing  
+## Introducing Rappel 
+### Imitation is the sincerest form of flattery 
 
 ![Niebler Ranges](niebler_ranges.png)
 
@@ -392,7 +454,7 @@ for(auto triple : triples | view::take(10)) {
 ## Rappel
 * Google's alterative to std::ranges for algorithm composition
 * Makes a different set of tradeoffs than std::ranges
-* Let's continue the tradition
+* Let's see what this looks like
 --
 ### Pythagorean Triples 
 ```c++[|2,14|3|4|5|6|7|8|9|10|11-13]
