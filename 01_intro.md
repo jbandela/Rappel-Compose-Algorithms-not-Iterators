@@ -89,6 +89,67 @@ for (int i : filtered_squared)
 
 --
 
+# Crash
+
+--
+#### Why?
+```c++[|6,10]
+ using IntAndString = std::pair<int, std::string>;
+ auto make_int_and_string = [](int i) -> IntAndString {
+     return {i*i, std::to_string(i)};
+ };
+ auto result = std::views::iota(1,1000001)                           //
+   | std::views::transform(make_int_and_string)  
+   | std::views::filter([](const auto& p) {
+        return p.first >= std::hash<std::string>()(p.second);
+    })
+   | std::views::transform(&IntAndString::second)  
+   | std::views::take(4);
+ for (auto s : result) 
+   std::cout << s << "\n";
+```
+--
+#### Reduced
+```c++[]
+ using IntAndString = std::pair<int, std::string>;
+ auto make_int_and_string = [](int i) -> IntAndString {
+     return {i*i, std::to_string(i)};
+ };
+ auto result = std::views::iota(1,1000001)                           //
+   | std::views::transform(make_int_and_string)  
+   | std::views::transform(&IntAndString::second)  
+ for (auto s : result) 
+   std::cout << s << "\n";
+```
+
+
+--
+# Transform Iterators
+
+```c++[|10-11]
+struct MakeIntAndStringIterator{
+  IotaIterator iota_iter;
+  IntAndString operator*(){
+    return make_int_and_string(*iota_iter);
+  }
+};
+
+struct SecondIterator{
+  MakeIntAndStringIterator int_and_string_iter;
+  std::string& operator*(){
+    return (*int_and_string_iter).second;
+  }
+}
+
+
+```
+
+--
+
+
+
+---
+
 ## A C++ Tradition  
 * In December 2018 after ranges were merged into C++20 Eric Niebler wrote a blog post showing how ranges can implement Pythagorean triples
   * https://ericniebler.com/2018/12/05/standard-ranges/
