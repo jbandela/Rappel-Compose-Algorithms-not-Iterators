@@ -124,7 +124,7 @@ for (int i : filtered_squared)
 
 
 --
-# Transform Iterators
+#### Transform Iterators
 
 ```c++[|10-11]
 struct MakeIntAndStringIterator{
@@ -145,9 +145,139 @@ struct SecondIterator{
 ```
 
 --
+### Solution
+* Range V3 `views::cache1`
+* This in not in C++ ranges
+
+--
+### TPOIASI
+```c++
+int times2(int n){
+   return n * 2;
+}
+bool isMultipleOf4(int n){return n % 4 == 0;}
+
+int main() {
+ std::vector<int> numbers = {1, 2, 3, 4, 5};
+ auto results = numbers 
+  | std::ranges::views::transform(times2) 
+  | std::ranges::views::filter(isMultipleOf4);
+ for (auto result : results) 
+     std::cout << result << '\n';
+}
+
+```
+* https://www.fluentcpp.com/2019/02/12/the-terrible-problem-of-incrementing-a-smart-iterator/
+--
+#### Output
+```
+4
+8
+```
+--
+### TPOIASI
+```c++
+int times2(int n){
+   std::cout << "transforming " << n << "\n";
+   return n * 2;
+}
+bool isMultipleOf4(int n){return n % 4 == 0;}
+
+int main() {
+ std::vector<int> numbers = {1, 2, 3, 4, 5};
+ auto results = numbers 
+  | std::ranges::views::transform(times2) 
+  | std::ranges::views::filter(isMultipleOf4);
+ for (auto result : results) 
+     std::cout << result << '\n';
+}
+
+```
+* https://www.fluentcpp.com/2019/02/12/the-terrible-problem-of-incrementing-a-smart-iterator/
+--
+#### Output
+```
+transforming 1
+transforming 2
+transforming 2
+4
+transforming 3
+transforming 4
+transforming 4
+8
+transforming 5
+
+```
+--
+#### Stack size
+```c++
+__attribute__((noinline)) void Main7() {
+  auto even = [](auto i) { return i % 2 == 0; };
+  std::vector<int> r0 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  auto result = r0 | std::views::filter(even) //
+                | std::views::filter(even)    //
+                | std::views::filter(even)    //
+                | std::views::filter(even)    //
+                | std::views::filter(even)    //
+                | std::views::filter(even)    //
+                | std::views::filter(even);
+  PrintStack("Main7");
+}
+
+```
+* https://godbolt.org/z/6zhGaf588 
+--
+
+#### Stack size
+```c++
+
+int main() {
+  Main0();
+  Main1();
+  Main2();
+  Main3();
+  Main4();
+  Main5();
+  Main6();
+  Main7();
+}
+```
+
+--
+#### Output
+```
+Main0 192 144 32 0 
+Main1 192 192 32 0 
+Main2 192 240 32 0 
+Main3 192 320 32 0 
+Main4 192 448 32 0 
+Main5 192 608 32 0 
+Main6 192 832 32 0 
+Main7 192 1120 32 0 
 
 
+```
+--
+#### Cubic
 
+* Richard Smith
+* 144 + ((N+1)(N+2)(N+3)/6 + 2N) * 8 bytes 
+
+Note:
+(Except Main0 and Main4 which is off by 8)
+We get one factor of N for:
+
+* Making each range hold the previous one by value instead of by reference 
+* Creating each range object in the same full expression 
+* Having each range cache its begin() so that has an amortized constant-time begin() as (I think is) required by the view requirements 
+
+--
+#### Can we make it better
+> Fundamentally, I don't think this cubic behavior can be fixed without giving up something that Ranges cares about. We get one factor of N for each of:
+
+- Making each range hold the previous one by value instead of by reference (which seems necessary for safety / correctness in this example)
+- Creating each range object in the same full expression (which seems important for the library's desired ergonomics)
+- Having each range cache its begin() so that has an amortized constant-time begin() as (I think is) required by the view requirements (which seems important for performance in some cases, due to the use of iterators underlying the ranges library)
 ---
 
 ## A C++ Tradition  
