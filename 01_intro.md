@@ -44,7 +44,7 @@ sed ${1} q
 ```
 --
 ## Pipeline Style
-* By pipeline style, we mean writing a series of transformations as a single expression without nested parentheses, rather than the more standard style of using separate invocations. 
+* Writing a series of transformations as a single expression without nested parentheses, rather than the more standard style of using separate invocations. 
 ```c++
 // Standard C++, non-pipelined
 auto result1 = f1(input);
@@ -56,23 +56,38 @@ auto result = input | f1 | f2 | f3;
 
 ```
 --
+### Terminology
+* Pipeline
+  * The entire series
+  * `input | f1 | f2 | f3`;
+* Stage
+  * Each individual component of the pipeline
+    * f1
+    * f2
+    * f3
+  * Also have seen *combinator* used for this, but this talk will use *stage*
+--
+
 ### std::ranges
 ```c++
-auto even = [](int i) { return 0 == i % 2; };
-auto square = [](int i) { return i * i; };
-auto filter_squared = std::view::iota(i) 
-  | std::views::filter(even) | std::views::transform(square);
-for (int i : filtered_squared)
-  std::cout << i << ' ';
+ auto const ints = {0, 1, 2, 3, 4, 5};
+ auto even = [](int i) { return 0 == i % 2; };
+ auto square = [](int i) { return i * i; };
+
+ for (int i : ints 
+              | std::views::filter(even) 
+              | std::views::transform(square))
+     std::cout << i << ' ';
+
 ```
 * https://en.cppreference.com/w/cpp/ranges#Range_adaptors
 --
 
-### Find numbers whose square is greater than the hash of the string
+### A more complicated example
 ```c++
  using IntAndString = std::pair<int, std::string>;
  auto make_int_and_string = [](int i) -> IntAndString {
-     return {i*i, std::to_string(i)};
+     return {i*i*i, std::to_string(i)};
  };
  auto result = std::views::iota(1,1000001)                           //
    | std::views::transform(make_int_and_string)  
@@ -96,7 +111,7 @@ for (int i : filtered_squared)
 ```c++[|6,10]
  using IntAndString = std::pair<int, std::string>;
  auto make_int_and_string = [](int i) -> IntAndString {
-     return {i*i, std::to_string(i)};
+     return {i*i*i, std::to_string(i)};
  };
  auto result = std::views::iota(1,1000001)                           //
    | std::views::transform(make_int_and_string)  
@@ -113,7 +128,7 @@ for (int i : filtered_squared)
 ```c++[]
  using IntAndString = std::pair<int, std::string>;
  auto make_int_and_string = [](int i) -> IntAndString {
-     return {i*i, std::to_string(i)};
+     return {i*i*i, std::to_string(i)};
  };
  auto result = std::views::iota(1,1000001)                           //
    | std::views::transform(make_int_and_string)  
@@ -147,7 +162,7 @@ struct SecondIterator{
 --
 ### Solution
 * Range V3 `views::cache1`
-* This in not in C++ ranges
+* This in not in std ranges
 
 --
 ### TPOIASI
@@ -269,24 +284,49 @@ We get one factor of N for:
 
 * Making each range hold the previous one by value instead of by reference 
 * Creating each range object in the same full expression 
-* Having each range cache its begin() so that has an amortized constant-time begin() as (I think is) required by the view requirements 
+* Having each range cache its begin() so that has an amortized constant-time begin() as required by the view requirements 
 
 --
-#### Can we make it better
-> Fundamentally, I don't think this cubic behavior can be fixed without giving up something that Ranges cares about. We get one factor of N for each of:
+### Rethinking
+* What if instead of a lazy pull model we did an eager push
+* `<iterator>` vs `<algorithm>`
+* Give up getting a single element at a time
+* Gain improved safety, simplicity
+--
+### Example
+```c++
+ using IntAndString = std::pair<int, std::string>;
+ auto make_int_and_string = [](int i) -> IntAndString {
+     return {i*i*i, std::to_string(i)};
+ };
 
-- Making each range hold the previous one by value instead of by reference (which seems necessary for safety / correctness in this example)
-- Creating each range object in the same full expression (which seems important for the library's desired ergonomics)
-- Having each range cache its begin() so that has an amortized constant-time begin() as (I think is) required by the view requirements (which seems important for performance in some cases, due to the use of iterators underlying the ranges library)
+ rpl::Apply(rpl::Iota(1, 10000001),
+   rpl::Transform(make_int_and_string),
+   rpl::Filter([](const auto& p) {
+        return p.first >= std::hash<std::string>()(p.second);
+    }),
+    rpl::Transform(&IntAndString::second),
+    rpl::Take(4),
+    rpl::ForEach([](const auto& s){
+        std::cout << s << "\n";
+    })
+ );
+
+```
 ---
 
-## A C++ Tradition  
-* In December 2018 after ranges were merged into C++20 Eric Niebler wrote a blog post showing how ranges can implement Pythagorean triples
-  * https://ericniebler.com/2018/12/05/standard-ranges/
-* We will honor that tradition today
-* Pythagorean Triple: `a*a + b*b == c*c`
+## Introducing  
+
+![Niebler Ranges](niebler_ranges.png)
 
 --
+
+![Niebler Triples](niebler_triples.png)
+--
+
+### std::ranges implementation
+--
+
 ### Helper range
 ```c++
 template<Semiregular T>
