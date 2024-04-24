@@ -88,7 +88,5 @@ rpl::Apply(
 
 
 ```
-
-
-
 --
+# Questions
