@@ -1,20 +1,10 @@
-# Rappel
-### Compose Algorithms, not Iterators
-#### Google's Alternative to Ranges
-
-Authors: Chris Philip and John Bandela  
-Presented by: John Bandela at CppNow 2024
-
----
-> __Iterators are the wrong abstraction for composing algorithms.__
----
-
+![Title](title.png)
 ---
 ## History
 ![Programming Pearls](knuth_mcilroy.png)
 
 1986
----
+--
 ### Challenge
 > Given a text file and an integer k, print the k most
 common words in the file (and the number of
@@ -45,6 +35,12 @@ sed ${1} q
 --
 ## Pipeline Style
 * Writing a series of transformations as a single expression without nested parentheses, rather than the more standard style of using separate invocations. 
+* Common in other languages
+  * Bash uses `|` to “pipe” data through a sequence of programs. 
+  * F# uses `|>`  
+* The primary syntactic feature is the lack of unbounded nesting.
+--
+## C++ pseudocode
 ```c++
 // Standard C++, non-pipelined
 auto result1 = f1(input);
@@ -159,8 +155,7 @@ struct SecondIterator{
 
 ```
 
---
-### Solution
+Note:
 * Range V3 `views::cache1`
 * This in not in std ranges
 
@@ -211,7 +206,7 @@ int main() {
 * https://www.fluentcpp.com/2019/02/12/the-terrible-problem-of-incrementing-a-smart-iterator/
 --
 #### Output
-```
+```[|2-3|6-7]
 transforming 1
 transforming 2
 transforming 2
@@ -223,6 +218,21 @@ transforming 4
 transforming 5
 
 ```
+--
+#### Output
+```[2-3,6-7]
+transforming 1
+transforming 2
+transforming 2
+4
+transforming 3
+transforming 4
+transforming 4
+8
+transforming 5
+
+```
+   * The filter iterator has an embedded loop. 
 --
 #### Stack size
 ```c++
@@ -273,10 +283,11 @@ Main7 192 1120 32 0
 
 ```
 --
-#### Cubic
+#### Cubic Growth
 
-* Richard Smith
 * 144 + ((N+1)(N+2)(N+3)/6 + 2N) * 8 bytes 
+* h/t Richard Smith
+* Matters more at Google where stacks are small
 
 Note:
 (Except Main0 and Main4 which is off by 8)
@@ -324,7 +335,6 @@ We will have an example that we look at more in depth coming up. This is mainly 
  auto make_int_and_string = [](int i) -> IntAndString {
      return {i*i*i, std::to_string(i)};
  };
-
  rpl::Apply(rpl::Iota(1, 10000001),
    rpl::Transform(make_int_and_string),
    rpl::Filter([](const auto& p) {
@@ -440,6 +450,8 @@ auto triples =
     });
   });
 ```
+Note:
+We have gotten away from our pipeline style a bit.
 --
 ### Output
 ```c++
@@ -451,10 +463,7 @@ for(auto triple : triples | view::take(10)) {
 }
 ```
 --
-## Rappel
-* Google's alterative to std::ranges for algorithm composition
-* Makes a different set of tradeoffs than std::ranges
-* Let's see what this looks like
+### Rappel
 --
 ### Pythagorean Triples 
 ```c++[|2,14|3|4|5|6|7|8|9|10|11-13]
