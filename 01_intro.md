@@ -317,10 +317,16 @@ We get one factor of N for:
   * We need a way to compose algorithms
 
 --
+![Landing](landing.jpg)
+Note:
+* Landings are disproportionately dangerous
+* So is returning in C++, because it is an opportunity to leak
+* Don't return unnecessary
+--
 ## Rappel
 * Google's alterative to std::ranges for algorithm composition
 * Based on the eager push model of `<algorithm>`
-* Passes each value through the series of transformations in a single call stack.
+* Passes each value through the series of transformations in a single call stack as much as possible.
 
 Note:
 Last is not always true as we will see with incremental and complete stages.

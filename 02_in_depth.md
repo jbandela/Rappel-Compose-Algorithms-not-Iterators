@@ -91,15 +91,17 @@ template <typename Range, typename... Stages>
 * `std::vector<int> v{...};`
 * Assume we capture the return value
 
-```c++[1|2|3|4|5]
+```c++[1|2|3|4|5|6-7]
 Apply(v, Max());
 Apply(v,Transform(triple));
 Apply(v,Transform(triple),To<std::vector>());
 Apply(v,Transform(triple),Sort());
 Apply(v,Transform(triple),To<std::vector>(),Sort());
+Apply(v,Transform(triple),To<std::vector>(),
+    Sort(), FilterDuplicates(), Accumulate());
 ```
 Note:
-1,3,5 are correct
+1,3,5,6 are correct
 --
 ### Generators
 * Input iterators can be difficult to write

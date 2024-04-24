@@ -1,3 +1,5 @@
+![Programming Pearls](knuth_mcilroy.png)
+--
 ## Challenge
 > Given a text file and an integer k, print the k most
 common words in the file (and the number of
