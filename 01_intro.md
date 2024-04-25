@@ -287,7 +287,6 @@ Main7 192 1120 32 0
 
 * 144 + ((N+1)(N+2)(N+3)/6 + 2N) * 8 bytes 
 * h/t Richard Smith
-* Matters more at Google where stacks are small
 
 Note:
 (Except Main0 and Main4 which is off by 8)
