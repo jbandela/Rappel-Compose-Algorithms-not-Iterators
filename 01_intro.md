@@ -154,6 +154,20 @@ struct SecondIterator{
 
 
 ```
+--
+#### Transform Iterators Inlined
+
+```c++[|5]
+struct SecondIteratorInlined{
+  IotaIterator iota_iter;
+  std::string& operator*(){
+    int i = *iota_iterator;
+    return std::pair<int,string>{i*i*i,std::to_string(i)}.second;
+  }
+}
+
+
+```
 
 Note:
 * Range V3 `views::cache1`
@@ -304,28 +318,87 @@ We get one factor of N for:
 --
 #### `<iterator>`
   * Lazy
+  * Flexible - we can get values even intermediate values one at a time
   * Values are pulled from the last iterator
-  * Potentially multiple loops (for example filter)
-  * Crossing a stage can result in destruction of temporaries (transform).
+    * Potentially multiple loops (for example filter)
+  * `return` is used to supply values
+    * `operator*` returns the requested value
+    * Crossing a stage can result in destruction of temporaries (transform).
   * `std::ranges::views` provide a way to compose iterators
 --
 #### `<algorithm>`
   * Eager - Finishes by end of function call
   * Top level loop that pushes values through
-  * A temporary can live through multiple stages
+  * Continuation passing is used to supply values
+    * The algorithms take an output iterator which is basically a thin wrapper on an invocable and values are taken from the input iterator and passed to the output iterator.
+    * If we composed like this, a temporary could live through multiple stages
   * We need a way to compose algorithms
 
+Note:
+Continuation passing style - instead of returning a value, a function takes another function which it calls with its result
 --
+#### Return vs Continuation Passing Style
+```c++
+
+void Output(const std::string& s){
+  std::cout << s << "\n";
+}
+
+std::string& Iterator(){
+  return std::pair{1, sttd::string("Hello")}.second;
+}
+
+void Unsafe(){
+  Output(Iterator());
+}
+
+
+
+```
+--
+#### Return vs Continuation Passing Style
+```c++
+
+void Output(const std::string& s){
+  std::cout << s << "\n";
+}
+
+
+template<typename F>
+void Algorithm(F f){
+  f(std::pair<int, std::string>(1, "Hello").second);
+}
+
+
+void Safe(){
+  Algorithm(&Output);
+}
+
+
+
+```
+
+--
+#### Lost Luggage is a dangling reference
+![baggage_claim](baggage_claim.jpg)
+
+Note:
+* 
+* So is returning in C++, because it is an opportunity to leak
+* Don't return unnecessary
+--
+#### Landings (like returns) are an opportunity to dangle references
 ![Landing](landing.jpg)
 Note:
 * Landings are disproportionately dangerous
-* So is returning in C++, because it is an opportunity to leak
-* Don't return unnecessary
+* So is returning in C++, because it is an opportunity to dangle
+
 --
 ## Rappel
 * Google's alterative to std::ranges for algorithm composition
 * Based on the eager push model of `<algorithm>`
-* Passes each value through the series of transformations in a single call stack as much as possible.
+* Passes each value through the series of transformations using continuation passing style.
+* 
 
 Note:
 Last is not always true as we will see with incremental and complete stages.
