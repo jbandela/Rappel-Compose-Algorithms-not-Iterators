@@ -323,15 +323,13 @@ We get one factor of N for:
     * Potentially multiple loops (for example filter)
   * `return` is used to supply values
     * `operator*` returns the requested value
-    * Crossing a stage can result in destruction of temporaries (transform).
   * `std::ranges::views` provide a way to compose iterators
 --
 #### `<algorithm>`
   * Eager - Finishes by end of function call
   * Top level loop that pushes values through
   * Continuation passing is used to supply values
-    * The algorithms take an output iterator which is basically a thin wrapper on an invocable and values are taken from the input iterator and passed to the output iterator.
-    * If we composed like this, a temporary could live through multiple stages
+    * The algorithms take an output iterator which is isomorphic to an invocable.
   * We need a way to compose algorithms
 
 Note:
@@ -345,7 +343,7 @@ void Output(const std::string& s){
 }
 
 std::string& Iterator(){
-  return std::pair{1, sttd::string("Hello")}.second;
+  return std::pair{1, std::string("Hello")}.second;
 }
 
 void Unsafe(){
@@ -426,6 +424,17 @@ We will have an example that we look at more in depth coming up. This is mainly 
  );
 
 ```
+Note:
+* One of the reasons we had the crash, is that we are able to directly access the reference to the temporary.
+* `Apply` isolates the reference to the temporary within the context of the function.
+--
+#### Fume Hoods (like Apply) isolate reactive interediates (like references to temporaries)
+
+![fume_hood](fume_hood.jpg)
+
+Note:
+Completing the entire pipeline in a single function call allows us to isolate references to temporaries.
+
 --
 #### TPOIASI
 ```c++
@@ -563,7 +572,9 @@ auto triples =
   });
 ```
 Note:
-We have gotten away from our pipeline style a bit.
+* We have gotten away from our pipeline style a bit.
+* This is actually continuation passing style
+
 --
 ### Output
 ```c++
