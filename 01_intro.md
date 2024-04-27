@@ -428,14 +428,6 @@ Note:
 * One of the reasons we had the crash, is that we are able to directly access the reference to the temporary.
 * `Apply` isolates the reference to the temporary within the context of the function.
 --
-#### Fume Hoods (like Apply) isolate reactive interediates (like references to temporaries)
-
-![fume_hood](fume_hood.jpg)
-
-Note:
-Completing the entire pipeline in a single function call allows us to isolate references to temporaries.
-
---
 #### TPOIASI
 ```c++
 int times2(int n){

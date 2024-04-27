@@ -78,6 +78,14 @@ template <typename Range, typename... Stages>
 * The first parameter is a `range`. It is actually more general and can be any complete value.
 * The `stages` is one or more of the above stages.
 * Note that the return type is `auto`. It will return a value and not a reference. This is for safety by default.
+--
+#### Fume Hoods (like Apply) isolate reactive interediates (like references to temporaries)
+
+![fume_hood](fume_hood.jpg)
+
+Note:
+Completing the entire pipeline in a single function call allows us to isolate references to temporaries.
+
 
 --
 ### Compose
