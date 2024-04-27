@@ -89,4 +89,16 @@ rpl::Apply(
 
 ```
 --
+![Landing](landing.jpg)
+Note:
+We minimize our landings (return)
+--
+![baggage_claim](baggage_claim.jpg)
+Note:
+ Reducing our risk of dangling references
+--
+![fume_hood](fume_hood.jpg)
+Note:
+And we safely isolate temporary references inside Apply
+--
 # Questions
