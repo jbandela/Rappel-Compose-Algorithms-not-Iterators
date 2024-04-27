@@ -389,6 +389,40 @@ transforming: 5
 * Transforms and Filters are not repeatedly evaluated
 * Stateful function objects for Transform
 * Stateful predicates for Filter
+
+--
+#### Stack Size
+```c++
+__attribute__((noinline)) void RappelMain7() {
+  auto even = [](auto i) { return i % 2 == 0; };
+
+  std::vector<int> r0 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  [[maybe_unused]] auto result = rpl::Apply(r0,
+                         rpl::Filter(even),  
+                         rpl::Filter(even),  
+                         rpl::Filter(even),  
+                         rpl::Filter(even),  
+                         rpl::Filter(even),  
+                         rpl::Filter(even),  
+                         rpl::Filter(even),  
+                         rpl::To<std::vector>());
+  PrintStack("RappelMain7");
+}
+
+```
+--
+#### Output
+```
+RappelMain0 224 112 32 192 0 
+RappelMain1 224 112 32 192 0 
+RappelMain2 224 128 32 192 0 
+RappelMain3 224 128 32 192 0 
+RappelMain4 224 128 32 192 0 
+RappelMain5 224 144 32 192 0 
+RappelMain6 224 160 32 192 0 
+RappelMain7 224 176 32 192 0 
+RappelMain14 224 320 32 192 0 
+```
 ---
 
 ## Introducing Rappel 
