@@ -328,10 +328,16 @@ Note:
 * Transparent intermediates - We can get at intermediates (for example the reference returned by a transforming function)
 ---
 ### `<algorithm>`
+```c++
+template< class InputIt, class OutputIt, class UnaryOp >
+OutputIt transform( InputIt first1, InputIt last1,
+                    OutputIt d_first, UnaryOp unary_op );
+
+```
 * Eager
 * Push
 * Batch
-* Continuation passing style
+* Continuation passing style - `d_first`
 Note:
 * Eager - Finishes by end of function call
 * Batch Push - Top-level loop
@@ -344,8 +350,18 @@ Note:
 * STL - Containers, Iterators, Algorithms
 Continuation passing style - instead of returning a value, a function takes another function which it calls with its result
 ---
+### Important Announcement
+Do you or your friends mainly use ranges to: <!-- .element: class="fragment"  -->
+  * Iterate with range for <!-- .element: class="fragment"  -->
+  * Pass to an algorithm <!-- .element: class="fragment"  -->
+  * Construct a collection <!-- .element: class="fragment"  -->
+  
+
+### You may be paying too much for flexibility <!-- .element: class="fragment"  -->
+
+---
 ### Premise
-Trade flexibility of `<iterator>` for safety and simplicity of `<algorithm>`
+Trade flexibility of `<iterator>` for safety and efficiency of `<algorithm>`
 Note:
 * Many times we are processing the entire range at once
   * Passed to an algorithm
