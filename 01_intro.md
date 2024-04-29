@@ -284,7 +284,7 @@ int main() {
 
 ---
 #### Output
-```
+```[|1|2|3|4|5|6|7|8]
 Main0 192 144 32 0 
 Main1 192 192 32 0 
 Main2 192 240 32 0 
@@ -494,7 +494,7 @@ __attribute__((noinline)) void RappelMain7() {
 ```
 ---
 #### Output
-```
+```[|1|2|3|4|5|6|7|8|9]
 RappelMain0 224 112 32 192 0 
 RappelMain1 224 112 32 192 0 
 RappelMain2 224 128 32 192 0 

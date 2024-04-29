@@ -149,7 +149,11 @@ auto Iota(T begin, End end) {
 
 #### Stages
 ---
-
+#### Aim for default safety
+ * `Max` return `optional<T>`
+ * `PartialSort(n)` is safe even if `n` > number of elements
+ * `NthElement(n)` is safe even if `n` > number of elements
+---
 #### Complete Transforms
 * TransformComplete
 * Sort

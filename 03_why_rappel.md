@@ -1,17 +1,10 @@
 ## Using Rappel
 ---
-### Aim for default safety
-* By design, less likely to have dangling references
-* `Apply` returns by value
-* Stages have safe defaults
-  * `Max` return `optional<T>`
-  * `PartialSort(n)` is safe even if `n` > number of elements
-  * `NthElement(n)` is safe even if `n` > number of elements
----
+
 ### Composition
 ---
 `Compose` is a first-class stage
-```c++ [2|7]
+```c++ [|2|7]
 auto FlattenOptional() {
   return rpl::Compose(rpl::Filter(), rpl::Deref());
 }
@@ -23,7 +16,7 @@ rpl::Apply(
 ```
 ---
 `Compose` generators
-```c++ [2-4|8]
+```c++ [|2-4|8]
 auto PerfectSquares() {
   return rpl::Compose(
     rpl::Iota(1),
@@ -38,7 +31,7 @@ rpl::Apply(
 ```
 ---
 `Compose` ranges
-```c++ [5-7]
+```c++ [|5-7]
 struct Transactions {
   std::vector<double> amounts;
 
@@ -50,10 +43,44 @@ struct Transactions {
 };
 ```
 ---
+### Generators
+* Input iterators can be difficult to write
+* Want an easy way to make generators such as `Iota`
+
+```c++
+template <typename T, typename GeneratorInvocable>
+auto Generator(GeneratorInvocable&& generator_invocable);
+```
+---
+### Iota
+```c++[|4]
+template <typename T>
+auto Iota(T begin) {
+  return rpl::Generator<T>([begin](auto output) mutable {
+    std::move(output)(begin);
+    ++begin;
+  });
+};
+---
+#### Iota with end
+```c++[|4]
+template <typename T, End>
+auto Iota(T begin, End end) {
+  return rpl::Generator<T>([begin,end](auto output) mutable {
+    if(begin != end){
+        std::move(output)(begin);
+        ++begin;
+    }
+  });
+};
+
+```
+---
+
 ### Multi-Argument Streams
 ---
 Multi-argument streams are passed as seperate arguments
-```c++ [2|3|4|5]
+```c++ [|2|3|4|5]
 std::map<int, std::vector<int>> values = {...};
 rpl::Apply(values,              // pair<int, vector>
            rpl::ExpandTuple(),  // int, vector
@@ -62,7 +89,7 @@ rpl::Apply(values,              // pair<int, vector>
 ```
 ---
 First class support
-```c++ [5-6]
+```c++ [|5-6]
 std::map<std::string, int> name2id = {...};
 auto id2name = rpl::Apply(
   std::move(name2id),
@@ -72,7 +99,7 @@ auto id2name = rpl::Apply(
 ```
 ---
 TransformArg
-```c++ [5-6]
+```c++ [|5-6]
 std::map<std::string, Person> name2person = {...};
 auto id2name = rpl::Apply(
   std::move(name2id),
@@ -82,8 +109,8 @@ auto id2name = rpl::Apply(
   rpl:ToMap<std::map>());
 ```
 ---
-"Correct" Reference Semantics
-```c++ [4-5|6-8]
+Preserve Reference Semantics
+```c++ [|9|13]
 std::vector<std::unique_ptr<int>> values = {...};
 rpl::Apply(
   values,
@@ -100,11 +127,13 @@ rpl::Apply(
       >);
     }));
 ```
+Note:
+We can use temporaries safely because everything contained inside `Apply`
 ---
 ### Error Handling
 ---
 Short-circuit on error and wrap results
-```c++ [6|7|8|9|4-9]
+```c++ [|6|7|8|9|4,10]
 std::optional<int> ParseInt(std::string_view);
 
 std::vector<std::optional<std::string>> values = {...};
@@ -113,11 +142,12 @@ std::optional<int> sum = rpl::Apply(
   rpl::UnwrapOptional(),      // string
   rpl::Transform(&ParseInt),  // optional<int>
   rpl::UnwrapOptional(),      // int
-  rpl::Accumulate());         // int
+  rpl::Accumulate()           // int
+);                            // optional<int>
 ```
 ---
 Monadic style
-```c++ [6-8|10-14]
+```c++ [|6-8|10-14]
 std::optional<int> ParseInt(std::string_view);
 int Squared(int i);
 
@@ -127,7 +157,7 @@ std::optional<int> cpp23 = value
   .and_then(&ParseInt)
   .transform(&Squared);
 
-std::optional<int> rappel = rpl::Apply(
+std::optional<int> result = rpl::Apply(
   value,
   rpl::UnwrapOptionalComplete(),
   rpl::TransformComplete(&ParseInt),
@@ -135,41 +165,35 @@ std::optional<int> rappel = rpl::Apply(
 ```
 ---
 Monadic StatusOr
-```c++ [6-8|10-14]
+```c++ [|7|8|9|10|11|12|6,13]
 absl::StatusOr<int> ParseInt(std::string_view);
 int Squared(int i);
 
-absl::StatusOr<std::string> value = ...;
+absl::StatusOr<std::vector<std::string>> values = ...;
 
-absl::StatusOr<int> rappel = rpl::Apply(
-  value,
-  rpl::UnwrapStatusOrComplete(),
-  rpl::TransformComplete(&ParseInt),
-  rpl::TransformComplete(&Squared));
+absl::StatusOr<std::vector<int>> result = rpl::Apply(
+  values,                        // StatusOr<vector<string>>
+  rpl::UnwrapStatusOrComplete(), // std::vector
+  rpl::Transform(&ParseInt),     // StatusOr<int>
+  rpl::UnwrapStatusOr(),         // int
+  rpl::Transform(&Squared),      // int
+  rpl::To<std::vector>()         // vector<int>
+);                               // StatusOr<vector<int>>
 ```
 ---
 ### Higher-Order Stages
 ---
 `Tee` splits outputs to multiple stages
-```c++ [10|11-14]
-auto compute_avg = [](int sum, int count) {
-  return count > 0
-    ? std::make_optional(sum / count)
-    : std::nullopt;
-};
+```c++ [|2,5-6]
 std::vector<int> values = {...};
-auto [min, max, count, avg] = rpl::Apply(
+auto [min, max, count] = rpl::Apply(
   values,
   rpl::Tee(
-    rpl::Min(), rpl::Max(), rpl::Count(),
-    rpl::Compose(
-      rpl::Tee(rpl::Accumulate(), rpl::Count()),
-      rpl::TransformComplete(rpl::ExpandTuple()),
-      rpl::TransformComplete(compute_avg))));
+    rpl::Min(), rpl::Max(), rpl::Count()));
 ```
 ---
 Group elements
-```c++ [9-12]
+```c++ [|9-12]
 struct Employee {
   int id;
   bool is_fulltime;
@@ -189,7 +213,7 @@ auto counts = rpl::Apply(
 ### Reference Inputs
 ---
 Const reference iteration by default
-```c++
+```c++[|3|8]
 std::vector<std::unique_ptr<int>> values = {...};
 rpl::Apply(
   values,  // values not copied!
@@ -203,7 +227,7 @@ rpl::Apply(
 ```
 ---
 Mutable references with `std::ref`
-```c++
+```c++[|2|7]
 rpl::Apply(
   std::ref(values),
   rpl::ForEach(
@@ -216,7 +240,7 @@ rpl::Apply(
 ```
 ---
 R-Values when moved
-```c++
+```c++[|2|7]
 rpl::Apply(
   std::move(values),
   rpl::ForEach(
@@ -228,31 +252,15 @@ rpl::Apply(
   }));
 ```
 ---
-Lazily moved
-```c++ [8-13]
-auto values = rpl::Apply(
-  {std::make_unique<int>(1), std::make_unique<int>(2),
-   std::make_unique<int>(3), std::make_unique<int>(4)},
-  rpl::To<std::vector>());
-
-auto evens = rpl::Apply(
-  std::move(values),
-  rpl::Filter([](const auto& ptr) {
-    return *ptr % 2 == 0; }),
-  rpl::To<std::vector>());
-// values = {*1, nullptr, *3, nullptr}
-// evens = {*2, *4}
-```
----
 ### Conveniences
 ---
 Initializing `std::vector` with `unique_ptr`
 
 ```c++
+// Doesn't work
 std::vector v{make_unique<int>(0), make_unique<int>(1)}; 
-```
 
-```c++
+// Works
 auto v = rpl::Apply(
   {std::make_unique<int>(0), std::make_unique<int>(1)},
   rpl::To<std::vector>());
@@ -261,15 +269,18 @@ auto v = rpl::Apply(
 ---
 Moving keys out of map or set
 ```c++
+
+// Doesn't work
 std::vector<std::string> v(std::move(s).begin(),
   std::move(s).end());
 
-std::vector<std::string> v2(std::move_move_iterator(s.begin()),
+// Doesn't work
+std::vector<std::string> v2(std::make_move_iterator(s.begin()),
   std::make_move_iterator(m.end()));
 
-```
-
-```c++
+// Works
 auto v = rpl::Apply(std::move(s), rpl::To<std::vector>());
 
 ```
+Note:
+Uses extract (or extract_and_get_next)
