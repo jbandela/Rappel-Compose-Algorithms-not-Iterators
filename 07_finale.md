@@ -1,12 +1,12 @@
 ![Programming Pearls](knuth_mcilroy.png)
---
+---
 ## Challenge
 > Given a text file and an integer k, print the k most
 common words in the file (and the number of
 their occurrences) in decreasing frequency.
---
+---
 ## Stages
---
+---
 ### ReadLines
 ```c++
 auto ReadLines() {
@@ -21,7 +21,7 @@ auto ReadLines() {
 }
 ```
 
---
+---
 ### Split String
 ```c
 auto SplitString() {
@@ -38,7 +38,7 @@ auto SplitString() {
   );
 }
 ```
---
+---
 ### Lower Case String
 ```c++
 auto LowerCaseString() {
@@ -51,7 +51,7 @@ auto LowerCaseString() {
   });
 }
 ```
---
+---
 ### Unique Counts
 ```c++
 auto UniqueCounts() {
@@ -65,7 +65,7 @@ auto UniqueCounts() {
 
 ```
 
---
+---
 
 ## Word Counts Pipeline 
 
@@ -88,17 +88,17 @@ rpl::Apply(
 
 
 ```
---
+---
 ![Landing](landing.jpg)
 Note:
 We minimize our landings (return)
---
+---
 ![baggage_claim](baggage_claim.jpg)
 Note:
  Reducing our risk of dangling references
---
+---
 ![fume_hood](fume_hood.jpg)
 Note:
 And we safely isolate temporary references inside Apply
---
+---
 # Questions

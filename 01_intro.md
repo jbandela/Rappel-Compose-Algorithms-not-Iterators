@@ -4,12 +4,12 @@
 ![Programming Pearls](knuth_mcilroy.png)
 
 1986
---
+---
 ### Challenge
 > Given a text file and an integer k, print the k most
 common words in the file (and the number of
 their occurrences) in decreasing frequency.
---
+---
 
 ### Don Knuth
 
@@ -18,7 +18,7 @@ Produces an absolute virtuoso work of art using literate programming and WEB.
 * Tries
 * Beautifully typeset with cross-references
 
---
+---
 
 ### Doug McIlroy 
 
@@ -32,14 +32,14 @@ sort -rn |
 sed ${1} q 
 
 ```
---
+---
 ## Pipeline Style
 * Writing a series of transformations as a single expression without nested parentheses, rather than the more standard style of using separate invocations. 
 * Common in other languages
   * Bash uses `|` to “pipe” data through a sequence of programs. 
   * F# uses `|>`  
 * The primary syntactic feature is the lack of unbounded nesting.
---
+---
 ## C++ pseudocode
 ```c++
 // Standard C++, non-pipelined
@@ -51,7 +51,7 @@ auto result3 = f3(result2);
 auto result = input | f1 | f2 | f3;
 
 ```
---
+---
 ### Terminology
 * Pipeline
   * The entire series
@@ -62,7 +62,7 @@ auto result = input | f1 | f2 | f3;
     * f2
     * f3
   * Also have seen *combinator* used for this, but this talk will use *stage*
---
+---
 
 ### std::ranges
 ```c++
@@ -77,7 +77,7 @@ auto result = input | f1 | f2 | f3;
 
 ```
 * https://en.cppreference.com/w/cpp/ranges#Range_adaptors
---
+---
 
 ### A more complicated example
 ```c++
@@ -98,11 +98,11 @@ auto result = input | f1 | f2 | f3;
 
 
 
---
+---
 
 # Crash
 
---
+---
 #### Why?
 ```c++[|6,10]
  using IntAndString = std::pair<int, std::string>;
@@ -119,7 +119,7 @@ auto result = input | f1 | f2 | f3;
  for (auto s : result) 
    std::cout << s << "\n";
 ```
---
+---
 #### Reduced
 ```c++[]
  using IntAndString = std::pair<int, std::string>;
@@ -134,7 +134,7 @@ auto result = input | f1 | f2 | f3;
 ```
 
 
---
+---
 #### Transform Iterators
 
 ```c++[|10-11]
@@ -154,7 +154,7 @@ struct SecondIterator{
 
 
 ```
---
+---
 #### Transform Iterators Inlined
 
 ```c++[|5]
@@ -173,7 +173,7 @@ Note:
 * Range V3 `views::cache1`
 * This in not in std ranges
 
---
+---
 ### TPOIASI
 ```c++
 int times2(int n){
@@ -192,13 +192,13 @@ int main() {
 
 ```
 * https://www.fluentcpp.com/2019/02/12/the-terrible-problem-of-incrementing-a-smart-iterator/
---
+---
 #### Output
 ```
 4
 8
 ```
---
+---
 ### TPOIASI
 ```c++
 int times2(int n){
@@ -218,7 +218,7 @@ int main() {
 
 ```
 * https://www.fluentcpp.com/2019/02/12/the-terrible-problem-of-incrementing-a-smart-iterator/
---
+---
 #### Output
 ```[|2-3|6-7]
 transforming 1
@@ -232,7 +232,7 @@ transforming 4
 transforming 5
 
 ```
---
+---
 #### Output
 ```[2-3,6-7]
 transforming 1
@@ -247,7 +247,7 @@ transforming 5
 
 ```
    * The filter iterator has an embedded loop. 
---
+---
 #### Stack size
 ```c++
 __attribute__((noinline)) void Main7() {
@@ -265,7 +265,7 @@ __attribute__((noinline)) void Main7() {
 
 ```
 * https://godbolt.org/z/6zhGaf588 
---
+---
 
 #### Stack size
 ```c++
@@ -282,7 +282,7 @@ int main() {
 }
 ```
 
---
+---
 #### Output
 ```
 Main0 192 144 32 0 
@@ -296,7 +296,7 @@ Main7 192 1120 32 0
 
 
 ```
---
+---
 #### Cubic Growth
 
 * 144 + ((N+1)(N+2)(N+3)/6 + 2N) * 8 bytes 
@@ -310,34 +310,43 @@ We get one factor of N for:
 * Creating each range object in the same full expression 
 * Having each range cache its begin() so that has an amortized constant-time begin() as required by the view requirements 
 
---
+---
 ## Rethinking
---
-### `<iterator>` vs `<algorithm>`
- What if instead of a lazy pull model we did an eager push
---
-#### `<iterator>`
-  * Lazy
-  * Flexible - we can get values even intermediate values one at a time
-  * Values are pulled from the last iterator
-    * Potentially multiple loops (for example filter)
-  * `return` is used to supply values
-    * `operator*` returns the requested value
-  * `std::ranges::views` provide a way to compose iterators
---
-#### `<algorithm>`
-  * Eager - Finishes by end of function call
-  * Top level loop that pushes values through
-  * Continuation passing is used to supply values
-    * The algorithms take an output iterator which is isomorphic to an invocable.
-  * We need a way to compose algorithms
+---
+### `<iterator>`
+* Ranges uses iterators as the basis for pipeline style
+* Lazy Pull- Values are pulled on demand from last iterator.
+  * Loop is at bottom
+  * Can have multiple loops (for example with multiple filters)
+* Interactive - Can pull one value. In different part of code, pull another value.
+* Values are supplied using `return`
+* Transparent intermediates - We can get at intermediates (for example the reference returned by a transforming function)
+---
+### `<algorithm>`
+* Eager - Finishes by end of function call
+* Batch Push - Top-level loop
+  * Top-level loop pushes values through transformation to output
+* Continuation passing style
+  * Passing in output iterator is isomorphic to passing a function taking a single parameter
+* Opaque intermediates - We can't get at intermediates
+  * For example with `transform` we only get result of the transforming function after it is written to the output iterator.
 
 Note:
+* STL - Containers, Iterators, Algorithms
 Continuation passing style - instead of returning a value, a function takes another function which it calls with its result
---
+---
+### Trade flexibility of `<iterator>` ...
+* Many times we are processing the entire range at once
+  * Passed to an algorithm
+  * Used with range for
+---
+### For benefits of `<algorithm>...
+* Continuation passing style can help avoid dangling references
+* Eagerness and opaque intermediates can help limit exposure to temporaries to immediate function call
+* Batch push can avoid multiple loops
+---
 #### Return vs Continuation Passing Style
-```c++
-
+```c++[|5-6]
 void Output(const std::string& s){
   std::cout << s << "\n";
 }
@@ -350,23 +359,18 @@ void Unsafe(){
   Output(Iterator());
 }
 
-
-
 ```
---
+---
 #### Return vs Continuation Passing Style
-```c++
-
+```c++[|7]
 void Output(const std::string& s){
   std::cout << s << "\n";
 }
-
 
 template<typename F>
 void Algorithm(F f){
   f(std::pair<int, std::string>(1, "Hello").second);
 }
-
 
 void Safe(){
   Algorithm(&Output);
@@ -376,7 +380,7 @@ void Safe(){
 
 ```
 
---
+---
 #### Lost Luggage is a dangling reference
 ![baggage_claim](baggage_claim.jpg)
 
@@ -384,27 +388,24 @@ Note:
 * 
 * So is returning in C++, because it is an opportunity to leak
 * Don't return unnecessary
---
+---
 #### Landings (like returns) are an opportunity to dangle references
 ![Landing](landing.jpg)
 Note:
 * Landings are disproportionately dangerous
 * So is returning in C++, because it is an opportunity to dangle
 
---
+---
 ## Rappel
 * Google's alterative to std::ranges for algorithm composition
-* Based on the eager push model of `<algorithm>`
+* Based on the eager model of `<algorithm>`
 * Passes each value through the series of transformations using continuation passing style.
-* 
 
-Note:
-Last is not always true as we will see with incremental and complete stages.
---
+---
 
 ### Quick Examples
 We will have an example that we look at more in depth coming up. This is mainly just to get a feel of the shape.
---
+---
 #### Crash Example
 ```c++
  using IntAndString = std::pair<int, std::string>;
@@ -427,7 +428,7 @@ We will have an example that we look at more in depth coming up. This is mainly 
 Note:
 * One of the reasons we had the crash, is that we are able to directly access the reference to the temporary.
 * `Apply` isolates the reference to the temporary within the context of the function.
---
+---
 #### TPOIASI
 ```c++
 int times2(int n){
@@ -447,7 +448,7 @@ int main() {
 }
 
 ```
---
+---
 #### Output
 ```
 transforming: 1
@@ -458,13 +459,13 @@ transforming: 4
 8
 transforming: 5
 ```
---
+---
 #### Simpler evaluation model
 * Transforms and Filters are not repeatedly evaluated
 * Stateful function objects for Transform
 * Stateful predicates for Filter
 
---
+---
 #### Stack Size
 ```c++
 __attribute__((noinline)) void RappelMain7() {
@@ -484,7 +485,7 @@ __attribute__((noinline)) void RappelMain7() {
 }
 
 ```
---
+---
 #### Output
 ```
 RappelMain0 224 112 32 192 0 
@@ -498,19 +499,73 @@ RappelMain7 224 176 32 192 0
 RappelMain14 224 320 32 192 0 
 ```
 ---
+#### Benchmarks
+---
+#### Handwritten loop
+``` c++
+std::vector<int> result;
+for (int i : v) {
+  if (i % 2 != 0 && i % 3 != 0 && i % 5 != 0 
+      && i % 7 != 0 && i % 11 != 0) {
+    result.push_back(i);
+  }
+}
 
+```
+---
+#### std::ranges
+``` c++
+auto to_vector = [](auto&& r){
+  return std::vector<int>(r.begin(), r.end());
+};
+using std::ranges::views::filter
+std::vector<int> result = to_vector(v                              
+ | filter(not_divisible_by_2)   
+ | filter(not_divisible_by_3)   
+ | filter(not_divisible_by_5)   
+ | filter(not_divisible_by_7)   
+ | filter(not_divisible_by_11));  
+
+```
+---
+#### Rappel
+```c++
+std::vector<int> result = rpl::Apply(v,                                 
+     rpl::Filter(not_divisible_by_2),   
+     rpl::Filter(not_divisible_by_3),   
+     rpl::Filter(not_divisible_by_5),   
+     rpl::Filter(not_divisible_by_7),   
+     rpl::Filter(not_divisible_by_11),  
+     rpl::To<std::vector>()                  
+ );
+
+```
+
+---
+#### Optimized
+![Optimized](optimized.svg)
+
+
+
+---
+#### Unoptimized
+![Unoptimized](unoptimized.svg)
+
+Note:
+The value of this benchmark needs some explanation. The goal of this benchmark is to try to clarify the worst-case scenario for the abstraction penalty over a manual for loop. That doesn't mean we expect to pay that cost in most cases, but it does show the significance of the abstraction penalty that the optimizer is being relied on to reach competitive performance. This is important for two reasons. The first is that these libraries are building an abstraction on top of one of the most fundamental abstractions of programs:loops. In real world code, unlike in microbenchmarks, this loop abstraction itself is likely to be a building block to more complicated transformations amplifying the costs and potentially making it harder to optimize. Thus, having an understanding of the abstraction penalty is critical. Second, there are cases (such as debug builds) where we won't have the full optimizer to remove the abstraction penalty, and we don't want to make code un-debuggable due to the severity of the performance change.
+---
 ## Introducing Rappel 
 ### Imitation is the sincerest form of flattery 
 
 ![Niebler Ranges](niebler_ranges.png)
 
---
+---
 
 ![Niebler Triples](niebler_triples.png)
---
+---
 
 ### std::ranges implementation
---
+---
 
 ### Helper range
 ```c++
@@ -529,7 +584,7 @@ private:
   optional<T> data_{};
 };
 ```
---
+---
 ### Helper lambdas
 ```c++
 inline constexpr auto for_each =
@@ -548,7 +603,7 @@ inline constexpr auto yield_if =
              : maybe_view<T>{};
   };
 ```
---
+---
 
 ### Lazy Triples
 ```c++
@@ -567,7 +622,7 @@ Note:
 * We have gotten away from our pipeline style a bit.
 * This is actually continuation passing style
 
---
+---
 ### Output
 ```c++
 for(auto triple : triples | view::take(10)) {
@@ -577,9 +632,9 @@ for(auto triple : triples | view::take(10)) {
        << get<2>(triple) << ')' << '\n';
 }
 ```
---
+---
 ### Rappel
---
+---
 ### Pythagorean Triples 
 ```c++[|2,14|3|4|5|6|7|8|9|10|11-13]
 void OutputPythagoreanTriples() {
@@ -611,7 +666,7 @@ Note:
 * Swizzle - Rearranges the stream arguments
 * Take
 * ForEach - Notice now we get multiple arguments
---
+---
 ### Repetition 
 ```c++ [|4-5|6-7]
 void OutputPythagoreanTriples() {
@@ -631,7 +686,7 @@ void OutputPythagoreanTriples() {
 }
 
 ```
---
+---
 ### Compose 
 ```c++[2-3|6-7|]
 void OutputPythagoreanTriples() {
@@ -651,7 +706,7 @@ void OutputPythagoreanTriples() {
 }
 
 ```
---
+---
 <!-- .slide: data-transition="slide-in none-out" -->
 ### Flexibility 
 ```c++[|10-13||1]
@@ -672,7 +727,7 @@ void OutputPythagoreanTriples() {
 }
 
 ```
---
+---
 <!-- .slide: data-transition="none-out none-in" -->
 ### Flexibility 
 ```c++[1||4]
@@ -693,7 +748,7 @@ auto PythagoreanTriples() {
 }
 
 ```
---
+---
 <!-- .slide: data-transition="none-out none-in" -->
 ### Flexibility 
 ```c++[4||10-13]
@@ -714,7 +769,7 @@ auto PythagoreanTriples() {
 }
 
 ```
---
+---
 <!-- .slide: data-transition=" none-in" -->
 ### Flexibility 
 ```c++[]
@@ -735,7 +790,7 @@ auto PythagoreanTriples() {
 }
 
 ```
---
+---
 ### Pythagorean Triples 
 ```c++[|6|7|8|9|10]
 auto PythagoreanTriples() {
@@ -756,7 +811,7 @@ Note:
 * Hypotenuse length
 * Long leg length
 * Short leg length
---
+---
 ### Pythagorean Triples 
 ```c++[|2,7|3|4|5|6]
 vector<tuple<int,int,int>> triples = 
