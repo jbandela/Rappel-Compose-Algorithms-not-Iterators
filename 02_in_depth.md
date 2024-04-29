@@ -75,7 +75,7 @@
 template <typename Range, typename... Stages>
 [[nodiscard]] auto Apply(Range&& range, Stages&&... stages);
 ```
-* The first parameter is a `range`. It is actually more general and can be any complete value.
+* The first parameter is a `range`
 * The `stages` is one or more of the above stages.
 * Note that the return type is `auto`. It will return a value and not a reference. This is for safety by default.
 ---
@@ -84,14 +84,9 @@ template <typename Range, typename... Stages>
 ![fume_hood](fume_hood.jpg)
 
 Note:
-Completing the entire pipeline in a single function call allows us to isolate references to temporaries.
+* Completing the entire pipeline in a single function call allows us to isolate references to temporaries.
+* range  is actually more general and can be any complete value.
 
-
----
-### Compose
-* Creates new stages by composition
-* It is just a thin wrapper over `std::tuple`.
-* `Apply` treats passing in `Compose` as if you passed what is in the elements directly.
 
 ---
 
@@ -110,6 +105,13 @@ Apply(v,Transform(triple),To<std::vector>(),
 ```
 Note:
 1,3,5,6 are correct
+---
+### Compose
+* Creates new stages by composition
+* It is just a thin wrapper over `std::tuple`.
+* `Apply` treats passing in `Compose` as if you passed what is in the elements directly.
+
+
 ---
 ### Generators
 * Input iterators can be difficult to write
@@ -155,7 +157,6 @@ auto Iota(T begin, End end) {
 * PartialSort
 * NthElement
 * Unique
-* UnwrapOptionalComplete
 ---
 #### Incremental To Complete Accumulators
 * Accumulate
@@ -226,6 +227,7 @@ auto Iota(T begin, End end) {
 #### Error Handling
 * UnwrapOptional
 * UnwrapOptionalArg
+* UnwrapOptionalComplete
 ---
 ## Implementing Stages
  * Warning: Internals ahead

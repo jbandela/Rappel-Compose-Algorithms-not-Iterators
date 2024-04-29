@@ -314,6 +314,11 @@ We get one factor of N for:
 ## Rethinking
 ---
 ### `<iterator>`
+* Lazy
+* Pull
+* Interactive
+* `return`
+Note:
 * Ranges uses iterators as the basis for pipeline style
 * Lazy Pull- Values are pulled on demand from last iterator.
   * Loop is at bottom
@@ -323,6 +328,11 @@ We get one factor of N for:
 * Transparent intermediates - We can get at intermediates (for example the reference returned by a transforming function)
 ---
 ### `<algorithm>`
+* Eager
+* Push
+* Batch
+* Continuation passing style
+Note:
 * Eager - Finishes by end of function call
 * Batch Push - Top-level loop
   * Top-level loop pushes values through transformation to output
@@ -331,16 +341,15 @@ We get one factor of N for:
 * Opaque intermediates - We can't get at intermediates
   * For example with `transform` we only get result of the transforming function after it is written to the output iterator.
 
-Note:
 * STL - Containers, Iterators, Algorithms
 Continuation passing style - instead of returning a value, a function takes another function which it calls with its result
 ---
-### Trade flexibility of `<iterator>` ...
+### Premise
+Trade flexibility of `<iterator>` for safety and simplicity of `<algorithm>`
+Note:
 * Many times we are processing the entire range at once
   * Passed to an algorithm
   * Used with range for
----
-### For benefits of `<algorithm>`...
 * Continuation passing style can help avoid dangling references
 * Eagerness and opaque intermediates can help limit exposure to temporaries to immediate function call
 * Batch push can avoid multiple loops
@@ -384,15 +393,13 @@ void Safe(){
 #### Lost Luggage is a dangling reference
 ![baggage_claim](baggage_claim.jpg)
 
-Note:
-* 
-* So is returning in C++, because it is an opportunity to leak
-* Don't return unnecessary
 ---
 #### Landings (like returns) are an opportunity to dangle references
 ![Landing](landing.jpg)
 Note:
 * Landings are disproportionately dangerous
+* Landings make it more likely to lose luggage
+* Returns make it more likely to dangle references
 * So is returning in C++, because it is an opportunity to dangle
 
 ---
