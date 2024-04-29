@@ -340,7 +340,7 @@ Continuation passing style - instead of returning a value, a function takes anot
   * Passed to an algorithm
   * Used with range for
 ---
-### For benefits of `<algorithm>...
+### For benefits of `<algorithm>`...
 * Continuation passing style can help avoid dangling references
 * Eagerness and opaque intermediates can help limit exposure to temporaries to immediate function call
 * Batch push can avoid multiple loops
@@ -553,6 +553,8 @@ std::vector<int> result = rpl::Apply(v,
 
 Note:
 The value of this benchmark needs some explanation. The goal of this benchmark is to try to clarify the worst-case scenario for the abstraction penalty over a manual for loop. That doesn't mean we expect to pay that cost in most cases, but it does show the significance of the abstraction penalty that the optimizer is being relied on to reach competitive performance. This is important for two reasons. The first is that these libraries are building an abstraction on top of one of the most fundamental abstractions of programs:loops. In real world code, unlike in microbenchmarks, this loop abstraction itself is likely to be a building block to more complicated transformations amplifying the costs and potentially making it harder to optimize. Thus, having an understanding of the abstraction penalty is critical. Second, there are cases (such as debug builds) where we won't have the full optimizer to remove the abstraction penalty, and we don't want to make code un-debuggable due to the severity of the performance change.
+
+Rappel ~4x slower, ranges ~12x slower
 ---
 ## Introducing Rappel 
 ### Imitation is the sincerest form of flattery 
