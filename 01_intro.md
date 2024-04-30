@@ -85,7 +85,7 @@ auto result = input | f1 | f2 | f3;
  auto make_int_and_string = [](int i) -> IntAndString {
      return {i*i*i, std::to_string(i)};
  };
- auto result = std::views::iota(1,1000001)                           //
+ auto result = std::views::iota(1,1000001)
    | std::views::transform(make_int_and_string)  
    | std::views::filter([](const auto& p) {
         return p.first >= std::hash<std::string>()(p.second);
@@ -109,7 +109,7 @@ auto result = input | f1 | f2 | f3;
  auto make_int_and_string = [](int i) -> IntAndString {
      return {i*i*i, std::to_string(i)};
  };
- auto result = std::views::iota(1,1000001)                           //
+ auto result = std::views::iota(1,1000001) 
    | std::views::transform(make_int_and_string)  
    | std::views::filter([](const auto& p) {
         return p.first >= std::hash<std::string>()(p.second);
@@ -126,7 +126,7 @@ auto result = input | f1 | f2 | f3;
  auto make_int_and_string = [](int i) -> IntAndString {
      return {i*i*i, std::to_string(i)};
  };
- auto result = std::views::iota(1,1000001)                           //
+ auto result = std::views::iota(1,1000001)  
    | std::views::transform(make_int_and_string)  
    | std::views::transform(&IntAndString::second)  
  for (auto s : result) 
@@ -452,6 +452,14 @@ Note:
 * One of the reasons we had the crash, is that we are able to directly access the reference to the temporary.
 * `Apply` isolates the reference to the temporary within the context of the function.
 ---
+#### Output
+```
+1291
+1292
+1293
+1294
+```
+---
 #### TPOIASI
 ```c++
 int times2(int n){
@@ -568,7 +576,8 @@ std::vector<int> result = rpl::Apply(v,
 #### Optimized
 ![Optimized](optimized.svg)
 
-
+Note:
+Rappel is 4-6x faster than std::ranges
 
 ---
 #### Unoptimized

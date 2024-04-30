@@ -113,39 +113,6 @@ Note:
 
 
 ---
-### Generators
-* Input iterators can be difficult to write
-* Want an easy way to make generators such as `Iota`
-
-```c++
-template <typename T, typename GeneratorInvocable>
-auto Generator(GeneratorInvocable&& generator_invocable);
-```
----
-### Iota
-```c++[|4]
-template <typename T>
-auto Iota(T begin) {
-  return rpl::Generator<T>([begin](auto output) mutable {
-    std::move(output)(begin);
-    ++begin;
-  });
-};
----
-#### Iota with end
-```c++[|4]
-template <typename T, End>
-auto Iota(T begin, End end) {
-  return rpl::Generator<T>([begin,end](auto output) mutable {
-    if(begin != end){
-        std::move(output)(begin);
-        ++begin;
-    }
-  });
-};
-
-```
----
 
 #### Stages
 ---
